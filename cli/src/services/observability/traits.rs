@@ -20,6 +20,7 @@ pub trait Telemetry: Send + Sync {
 }
 
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[allow(dead_code)]
 pub struct NoopLogger;
 
 impl Logger for NoopLogger {
@@ -56,11 +57,14 @@ impl Logger for super::Logger {
     }
 }
 
-impl Telemetry for super::TelemetryRuntime {
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct NoopTelemetry;
+
+impl Telemetry for NoopTelemetry {
     fn with_default_subscriber(
         &self,
         action: &mut dyn FnMut() -> Result<String, ClassifiedError>,
     ) -> Result<String, ClassifiedError> {
-        super::TelemetryRuntime::with_default_subscriber(self, action)
+        action()
     }
 }

@@ -52,24 +52,6 @@ local sceConfigSchema = new JsonSchema {
     ["workos_client_id"] = new JsonSchema {
       type = "string"
     }
-    ["otel"] = new JsonSchema {
-      type = "object"
-      additionalProperties = false
-      properties {
-        ["enabled"] = new JsonSchema {
-          type = "boolean"
-        }
-        ["exporter_otlp_endpoint"] = new JsonSchema {
-          type = "string"
-          format = "uri"
-          pattern = "^https?://"
-        }
-        ["exporter_otlp_protocol"] = new JsonSchema {
-          type = "string"
-          enum = new { "grpc"; "http/protobuf" }
-        }
-      }
-    }
     ["policies"] = new JsonSchema {
       type = "object"
       additionalProperties = false

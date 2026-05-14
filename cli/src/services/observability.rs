@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use std::fs::{File, OpenOptions};
 use std::io::Write;
 #[cfg(unix)]
@@ -11,16 +9,11 @@ use std::sync::{Arc, Mutex};
 
 use anyhow::{anyhow, bail, Result};
 use chrono::Utc;
-use opentelemetry::trace::TracerProvider;
-use opentelemetry_otlp::WithExportConfig;
-use opentelemetry_sdk::trace::SdkTracerProvider;
 use serde_json::json;
-use tracing_subscriber::prelude::*;
 
 use crate::services::config::{
-    self, parse_bool_env_value, validate_otlp_endpoint, LogFileMode, LogFormat, LogLevel,
-    OtlpProtocol, DEFAULT_OTEL_ENDPOINT, ENV_LOG_FILE, ENV_LOG_FILE_MODE, ENV_LOG_FORMAT,
-    ENV_LOG_LEVEL, ENV_OTEL_ENABLED, ENV_OTEL_ENDPOINT, ENV_OTEL_PROTOCOL,
+    self, LogFileMode, LogFormat, LogLevel, ENV_LOG_FILE, ENV_LOG_FILE_MODE, ENV_LOG_FORMAT,
+    ENV_LOG_LEVEL,
 };
 use crate::services::default_paths::{repo_dir, repo_file};
 use crate::services::error::ClassifiedError;
@@ -30,133 +23,6 @@ use crate::services::style::{error_text, heading};
 pub mod traits;
 
 pub const NAME: &str = "observability";
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-struct TelemetryConfig {
-    enabled: bool,
-    endpoint: String,
-    protocol: OtlpProtocol,
-}
-
-impl Default for TelemetryConfig {
-    fn default() -> Self {
-        Self {
-            enabled: false,
-            endpoint: DEFAULT_OTEL_ENDPOINT.to_string(),
-            protocol: OtlpProtocol::Grpc,
-        }
-    }
-}
-
-impl TelemetryConfig {
-    #[cfg_attr(not(test), allow(dead_code))]
-    fn from_env_lookup<F>(lookup: F) -> Result<Self>
-    where
-        F: Fn(&str) -> Option<String>,
-    {
-        let mut config = Self::default();
-
-        if let Some(raw) = lookup(ENV_OTEL_ENABLED) {
-            config.enabled = parse_bool_env_value(ENV_OTEL_ENABLED, &raw)?;
-        }
-
-        if !config.enabled {
-            return Ok(config);
-        }
-
-        if let Some(raw) = lookup(ENV_OTEL_PROTOCOL) {
-            config.protocol = OtlpProtocol::parse_env(&raw, ENV_OTEL_PROTOCOL)?;
-        }
-
-        if let Some(raw) = lookup(ENV_OTEL_ENDPOINT) {
-            config.endpoint = raw;
-        }
-
-        validate_otlp_endpoint(&config.endpoint)?;
-
-        Ok(config)
-    }
-}
-
-pub struct TelemetryRuntime {
-    provider: Option<SdkTracerProvider>,
-}
-
-impl TelemetryRuntime {
-    pub fn from_resolved_config(
-        config: &config::ResolvedObservabilityRuntimeConfig,
-    ) -> Result<Self> {
-        Self::from_config(&TelemetryConfig {
-            enabled: config.otel_enabled,
-            // Clone required: TelemetryConfig owns the endpoint String
-            endpoint: config.otel_endpoint.clone(),
-            protocol: config.otel_protocol,
-        })
-    }
-
-    #[cfg_attr(not(test), allow(dead_code))]
-    fn from_env_lookup<F>(lookup: F) -> Result<Self>
-    where
-        F: Fn(&str) -> Option<String>,
-    {
-        let config = TelemetryConfig::from_env_lookup(lookup)?;
-        Self::from_config(&config)
-    }
-
-    fn from_config(config: &TelemetryConfig) -> Result<Self> {
-        if !config.enabled {
-            return Ok(Self { provider: None });
-        }
-
-        let exporter = match config.protocol {
-            OtlpProtocol::Grpc => opentelemetry_otlp::SpanExporter::builder()
-                .with_tonic()
-                // Clone required: with_endpoint takes ownership of the endpoint String
-                .with_endpoint(config.endpoint.clone())
-                .build()
-                .map_err(|error| anyhow!("Failed to initialize OTLP gRPC exporter: {error}"))?,
-            OtlpProtocol::HttpProtobuf => opentelemetry_otlp::SpanExporter::builder()
-                .with_http()
-                // Clone required: with_endpoint takes ownership of the endpoint String
-                .with_endpoint(config.endpoint.clone())
-                .build()
-                .map_err(|error| anyhow!("Failed to initialize OTLP HTTP exporter: {error}"))?,
-        };
-
-        let provider = SdkTracerProvider::builder()
-            .with_simple_exporter(exporter)
-            .build();
-
-        Ok(Self {
-            provider: Some(provider),
-        })
-    }
-
-    pub fn with_default_subscriber<T, F>(&self, action: F) -> T
-    where
-        F: FnOnce() -> T,
-    {
-        if let Some(provider) = &self.provider {
-            let tracer = provider.tracer("sce-cli");
-            let subscriber = tracing_subscriber::registry()
-                .with(tracing_opentelemetry::layer().with_tracer(tracer));
-            return tracing::subscriber::with_default(subscriber, action);
-        }
-
-        action()
-    }
-}
-
-impl Drop for TelemetryRuntime {
-    fn drop(&mut self) {
-        if let Some(provider) = self.provider.take() {
-            // Best-effort shutdown during drop; errors are logged but not propagated
-            if let Err(e) = provider.shutdown() {
-                eprintln!("Warning: Failed to shutdown telemetry provider: {e:?}");
-            }
-        }
-    }
-}
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ObservabilityConfig {
@@ -278,7 +144,7 @@ impl Logger {
         })
     }
 
-    #[cfg_attr(not(test), allow(dead_code))]
+    #[allow(dead_code)]
     fn from_env_lookup<F>(lookup: F) -> Result<Self>
     where
         F: Fn(&str) -> Option<String>,

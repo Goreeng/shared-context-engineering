@@ -138,7 +138,7 @@ A user-invocable `sync` command is not wired in the current CLI surface; local D
 
 ## Dependency baseline
 
-- `cli/Cargo.toml` currently declares: `anyhow`, `clap`, `clap_complete`, `comfy-table`, `dirs`, `hmac`, `inquire`, `opentelemetry`, `opentelemetry-otlp`, `opentelemetry_sdk`, `owo-colors`, `reqwest`, `serde`, `serde_json`, `sha2`, `tokio`, `tracing`, `tracing-opentelemetry`, `tracing-subscriber`, and `turso`.
+- `cli/Cargo.toml` currently declares: `anyhow`, `clap`, `clap_complete`, `comfy-table`, `dirs`, `hmac`, `inquire`, `owo-colors`, `reqwest`, `serde`, `serde_json`, `sha2`, `tokio`, `tracing`, `tracing-subscriber`, and `turso`.
 - `tokio` is pinned with `default-features = false` and keeps a constrained runtime footprint for current-thread `Runtime::block_on` usage, plus timer-backed bounded retry/timeout behavior in resilience-wrapped operations.
 - `cli/src/services/auth.rs` now includes both the T03 Device Authorization Flow runtime (`start_device_auth_flow`) and T04 token-refresh runtime (`ensure_valid_token`) for WorkOS: it requests device codes, polls `/oauth/device/token` at fixed API interval (adding 5 seconds on `slow_down`), maps RFC 8628 terminal errors to actionable `Try:` guidance, checks token expiry from persisted `stored_at_unix_seconds + expires_in` with a bounded skew guard, refreshes expired access tokens through `/oauth/token` using `grant_type=refresh_token`, retries transient refresh failures via the shared resilience wrapper, and persists rotated tokens via `cli/src/services/token_storage.rs`.
 

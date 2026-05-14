@@ -24,7 +24,6 @@ impl RuntimeCommand for ConfigCommand {
 ///
 /// This default constructor is available for registry-based dispatch.
 /// The parse layer constructs `ConfigCommand` with the user's chosen subcommand and options.
-#[allow(dead_code)]
 pub fn make_config_command() -> RuntimeCommandHandle {
     Box::new(ConfigCommand {
         subcommand: config::ConfigSubcommand::Show(config::ConfigRequest {

@@ -6,7 +6,7 @@ use std::sync::Arc;
 use crate::services;
 use services::app_support::{self, RunOutcome};
 use services::error::ClassifiedError;
-use services::observability::traits::{Logger as LoggerTrait, Telemetry};
+use services::observability::traits::{Logger as LoggerTrait, NoopTelemetry, Telemetry};
 
 struct StartupContext {
     observability_config: services::config::ResolvedObservabilityRuntimeConfig,
@@ -172,10 +172,7 @@ fn initialize_runtime(startup: StartupContext) -> Result<AppRuntime, ClassifiedE
         services::observability::Logger::from_resolved_config(&startup.observability_config)
             .map_err(|error| app_support::classify_observability_configuration_error(&error))?;
     app_support::log_startup_configuration(&logger, &startup.observability_config);
-    let telemetry = services::observability::TelemetryRuntime::from_resolved_config(
-        &startup.observability_config,
-    )
-    .map_err(|error| app_support::classify_observability_configuration_error(&error))?;
+    let telemetry = NoopTelemetry;
     let context = AppContext::new(
         Arc::new(logger),
         Arc::new(telemetry),

@@ -29,21 +29,16 @@ const TOP_LEVEL_CONFIG_KEYS: &[&str] = &[
     "log_format",
     "log_file",
     "log_file_mode",
-    "otel",
     "timeout_ms",
     WORKOS_CLIENT_ID_KEY.config_key,
     "policies",
 ];
 const TOP_LEVEL_CONFIG_KEYS_DESCRIPTION: &str =
-    "$schema, log_level, log_format, log_file, log_file_mode, otel, timeout_ms, workos_client_id, policies";
-pub(crate) const DEFAULT_OTEL_ENDPOINT: &str = "http://127.0.0.1:4317";
+    "$schema, log_level, log_format, log_file, log_file_mode, timeout_ms, workos_client_id, policies";
 pub(crate) const ENV_LOG_LEVEL: &str = "SCE_LOG_LEVEL";
 pub(crate) const ENV_LOG_FORMAT: &str = "SCE_LOG_FORMAT";
 pub(crate) const ENV_LOG_FILE: &str = "SCE_LOG_FILE";
 pub(crate) const ENV_LOG_FILE_MODE: &str = "SCE_LOG_FILE_MODE";
-pub(crate) const ENV_OTEL_ENABLED: &str = "SCE_OTEL_ENABLED";
-pub(crate) const ENV_OTEL_ENDPOINT: &str = "OTEL_EXPORTER_OTLP_ENDPOINT";
-pub(crate) const ENV_OTEL_PROTOCOL: &str = "OTEL_EXPORTER_OTLP_PROTOCOL";
 pub(crate) const ENV_ATTRIBUTION_HOOKS_ENABLED: &str = "SCE_ATTRIBUTION_HOOKS_ENABLED";
 const WORKOS_CLIENT_ID_ENV: &str = "WORKOS_CLIENT_ID";
 const WORKOS_CLIENT_ID_BAKED_DEFAULT: &str = "client_sce_default";
@@ -120,6 +115,7 @@ impl LogFormat {
         }
     }
 
+    #[allow(dead_code)]
     pub(crate) fn parse_env(raw: &str, key: &str) -> Result<Self> {
         match raw {
             "text" => Ok(Self::Text),
@@ -153,6 +149,7 @@ impl LogFileMode {
         }
     }
 
+    #[allow(dead_code)]
     pub(crate) fn parse_env(raw: &str, key: &str) -> Result<Self> {
         match raw {
             "truncate" => Ok(Self::Truncate),
@@ -165,39 +162,6 @@ impl LogFileMode {
         match self {
             Self::Truncate => "truncate",
             Self::Append => "append",
-        }
-    }
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum OtlpProtocol {
-    Grpc,
-    HttpProtobuf,
-}
-
-impl OtlpProtocol {
-    pub(crate) fn parse(raw: &str, source: &str) -> Result<Self> {
-        match raw {
-            "grpc" => Ok(Self::Grpc),
-            "http/protobuf" => Ok(Self::HttpProtobuf),
-            _ => bail!(
-                "Invalid OTLP protocol '{raw}' from {source}. Valid values: grpc, http/protobuf."
-            ),
-        }
-    }
-
-    pub(crate) fn parse_env(raw: &str, key: &str) -> Result<Self> {
-        match raw {
-            "grpc" => Ok(Self::Grpc),
-            "http/protobuf" => Ok(Self::HttpProtobuf),
-            _ => bail!("Invalid {key} '{raw}'. Valid values: grpc, http/protobuf."),
-        }
-    }
-
-    pub(crate) fn as_str(self) -> &'static str {
-        match self {
-            Self::Grpc => "grpc",
-            Self::HttpProtobuf => "http/protobuf",
         }
     }
 }
@@ -309,9 +273,6 @@ struct RuntimeConfig {
     log_format: ResolvedValue<LogFormat>,
     log_file: ResolvedOptionalValue<String>,
     log_file_mode: ResolvedValue<LogFileMode>,
-    otel_enabled: ResolvedValue<bool>,
-    otel_endpoint: ResolvedValue<String>,
-    otel_protocol: ResolvedValue<OtlpProtocol>,
     timeout_ms: ResolvedValue<u64>,
     attribution_hooks_enabled: ResolvedValue<bool>,
     workos_client_id: ResolvedOptionalValue<String>,
@@ -337,9 +298,6 @@ pub(crate) struct ResolvedObservabilityRuntimeConfig {
     pub(crate) log_format: LogFormat,
     pub(crate) log_file: Option<String>,
     pub(crate) log_file_mode: LogFileMode,
-    pub(crate) otel_enabled: bool,
-    pub(crate) otel_endpoint: String,
-    pub(crate) otel_protocol: OtlpProtocol,
     pub(crate) loaded_config_paths: Vec<LoadedConfigPath>,
     pub(crate) validation_errors: Vec<String>,
 }
@@ -355,9 +313,6 @@ struct FileConfig {
     log_format: Option<FileConfigValue<LogFormat>>,
     log_file: Option<FileConfigValue<String>>,
     log_file_mode: Option<FileConfigValue<LogFileMode>>,
-    otel_enabled: Option<FileConfigValue<bool>>,
-    otel_endpoint: Option<FileConfigValue<String>>,
-    otel_protocol: Option<FileConfigValue<OtlpProtocol>>,
     timeout_ms: Option<FileConfigValue<u64>>,
     attribution_hooks_enabled: Option<FileConfigValue<bool>>,
     workos_client_id: Option<FileConfigValue<String>>,
@@ -373,17 +328,9 @@ struct ParsedFileConfigDocument {
     log_format: Option<String>,
     log_file: Option<String>,
     log_file_mode: Option<String>,
-    otel: Option<ParsedOtelConfigDocument>,
     timeout_ms: Option<u64>,
     workos_client_id: Option<String>,
     policies: Option<ParsedPoliciesConfigDocument>,
-}
-
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-struct ParsedOtelConfigDocument {
-    enabled: Option<bool>,
-    exporter_otlp_endpoint: Option<String>,
-    exporter_otlp_protocol: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
@@ -431,12 +378,6 @@ type ParsedFilePolicies = (
     Option<FileConfigValue<Vec<String>>>,
     Option<FileConfigValue<Vec<CustomBashPolicyEntry>>>,
 );
-type OtelFileConfig = (
-    Option<FileConfigValue<bool>>,
-    Option<FileConfigValue<String>>,
-    Option<FileConfigValue<OtlpProtocol>>,
-);
-
 static BUILTIN_BASH_POLICY_CATALOG: OnceLock<BuiltinBashPolicyCatalog> = OnceLock::new();
 static CONFIG_SCHEMA_VALIDATOR: OnceLock<Validator> = OnceLock::new();
 
@@ -648,9 +589,6 @@ where
         log_format: runtime.log_format.value,
         log_file: runtime.log_file.value,
         log_file_mode: runtime.log_file_mode.value,
-        otel_enabled: runtime.otel_enabled.value,
-        otel_endpoint: runtime.otel_endpoint.value,
-        otel_protocol: runtime.otel_protocol.value,
         loaded_config_paths: runtime.loaded_config_paths,
         validation_errors: runtime.validation_errors,
     })
@@ -728,9 +666,6 @@ where
         log_format: None,
         log_file: None,
         log_file_mode: None,
-        otel_enabled: None,
-        otel_endpoint: None,
-        otel_protocol: None,
         timeout_ms: None,
         attribution_hooks_enabled: None,
         workos_client_id: None,
@@ -759,15 +694,6 @@ where
         }
         if let Some(log_file_mode) = layer.log_file_mode {
             file_config.log_file_mode = Some(log_file_mode);
-        }
-        if let Some(otel_enabled) = layer.otel_enabled {
-            file_config.otel_enabled = Some(otel_enabled);
-        }
-        if let Some(otel_endpoint) = layer.otel_endpoint {
-            file_config.otel_endpoint = Some(otel_endpoint);
-        }
-        if let Some(otel_protocol) = layer.otel_protocol {
-            file_config.otel_protocol = Some(otel_protocol);
         }
         if let Some(timeout_ms) = layer.timeout_ms {
             file_config.timeout_ms = Some(timeout_ms);
@@ -865,60 +791,6 @@ where
         );
     }
 
-    let mut resolved_otel_enabled = ResolvedValue {
-        value: false,
-        source: ValueSource::Default,
-    };
-    if let Some(value) = file_config.otel_enabled {
-        resolved_otel_enabled = ResolvedValue {
-            value: value.value,
-            source: ValueSource::ConfigFile(value.source),
-        };
-    }
-    if let Some(raw) = env_lookup(ENV_OTEL_ENABLED) {
-        resolved_otel_enabled = ResolvedValue {
-            value: parse_bool_value_from(ENV_OTEL_ENABLED, &raw, ENV_OTEL_ENABLED)?,
-            source: ValueSource::Env,
-        };
-    }
-
-    let mut resolved_otel_endpoint = ResolvedValue {
-        value: DEFAULT_OTEL_ENDPOINT.to_string(),
-        source: ValueSource::Default,
-    };
-    if let Some(value) = file_config.otel_endpoint {
-        resolved_otel_endpoint = ResolvedValue {
-            value: value.value,
-            source: ValueSource::ConfigFile(value.source),
-        };
-    }
-    if let Some(raw) = env_lookup(ENV_OTEL_ENDPOINT) {
-        resolved_otel_endpoint = ResolvedValue {
-            value: raw,
-            source: ValueSource::Env,
-        };
-    }
-
-    let mut resolved_otel_protocol = ResolvedValue {
-        value: OtlpProtocol::Grpc,
-        source: ValueSource::Default,
-    };
-    if let Some(value) = file_config.otel_protocol {
-        resolved_otel_protocol = ResolvedValue {
-            value: value.value,
-            source: ValueSource::ConfigFile(value.source),
-        };
-    }
-    if let Some(raw) = env_lookup(ENV_OTEL_PROTOCOL) {
-        resolved_otel_protocol = ResolvedValue {
-            value: OtlpProtocol::parse(&raw, ENV_OTEL_PROTOCOL)?,
-            source: ValueSource::Env,
-        };
-    }
-    if resolved_otel_enabled.value {
-        validate_otlp_endpoint(&resolved_otel_endpoint.value)?;
-    }
-
     let mut resolved_timeout_ms = ResolvedValue {
         value: DEFAULT_TIMEOUT_MS,
         source: ValueSource::Default,
@@ -984,9 +856,6 @@ where
         log_format: resolved_log_format,
         log_file: resolved_log_file,
         log_file_mode: resolved_log_file_mode,
-        otel_enabled: resolved_otel_enabled,
-        otel_endpoint: resolved_otel_endpoint,
-        otel_protocol: resolved_otel_protocol,
         timeout_ms: resolved_timeout_ms,
         attribution_hooks_enabled: resolved_attribution_hooks_enabled,
         workos_client_id: resolved_workos_client_id,
@@ -1002,30 +871,6 @@ pub(crate) fn parse_bool_value_from(key: &str, raw: &str, source: &str) -> Resul
         "0" | "false" => Ok(false),
         _ => bail!("Invalid {key} '{raw}' from {source}. Valid values: true, false, 1, 0."),
     }
-}
-
-pub(crate) fn parse_bool_env_value(key: &str, raw: &str) -> Result<bool> {
-    match raw {
-        "1" | "true" => Ok(true),
-        "0" | "false" => Ok(false),
-        _ => bail!("Invalid {key} '{raw}'. Valid values: true, false, 1, 0."),
-    }
-}
-
-pub(crate) fn validate_otlp_endpoint(endpoint: &str) -> Result<()> {
-    if endpoint.is_empty() {
-        bail!(
-            "Invalid {ENV_OTEL_ENDPOINT} ''. Try: set it to an absolute http(s) URL, for example {DEFAULT_OTEL_ENDPOINT}."
-        );
-    }
-
-    if endpoint.starts_with("http://") || endpoint.starts_with("https://") {
-        return Ok(());
-    }
-
-    bail!(
-        "Invalid {ENV_OTEL_ENDPOINT} '{endpoint}'. Try: set it to an absolute http(s) URL, for example {DEFAULT_OTEL_ENDPOINT}."
-    )
 }
 
 fn resolve_bash_policy_config(
@@ -1298,8 +1143,6 @@ fn parse_file_config(raw: &str, path: &Path, source: ConfigPathSource) -> Result
             })
         })
         .transpose()?;
-    let (otel_enabled, otel_endpoint, otel_protocol) =
-        map_otel_config(typed.otel.as_ref(), object, path, source)?;
     let timeout_ms = typed
         .timeout_ms
         .map(|value| FileConfigValue { value, source });
@@ -1314,62 +1157,12 @@ fn parse_file_config(raw: &str, path: &Path, source: ConfigPathSource) -> Result
         log_format,
         log_file,
         log_file_mode,
-        otel_enabled,
-        otel_endpoint,
-        otel_protocol,
         timeout_ms,
         attribution_hooks_enabled,
         workos_client_id,
         bash_policy_presets,
         bash_policy_custom,
     })
-}
-
-fn map_otel_config(
-    typed: Option<&ParsedOtelConfigDocument>,
-    object: &serde_json::Map<String, Value>,
-    path: &Path,
-    source: ConfigPathSource,
-) -> Result<OtelFileConfig> {
-    let Some(otel_value) = object.get("otel") else {
-        return Ok((None, None, None));
-    };
-
-    let otel_object = otel_value.as_object().with_context(|| {
-        format!(
-            "Config key 'otel' in '{}' must be an object.",
-            path.display()
-        )
-    })?;
-    validate_object_keys(
-        otel_object,
-        path,
-        Some("otel"),
-        &[
-            "enabled",
-            "exporter_otlp_endpoint",
-            "exporter_otlp_protocol",
-        ],
-        "enabled, exporter_otlp_endpoint, exporter_otlp_protocol",
-    )?;
-
-    let enabled = typed
-        .and_then(|config| config.enabled)
-        .map(|value| FileConfigValue { value, source });
-    let endpoint = typed
-        .and_then(|config| config.exporter_otlp_endpoint.clone())
-        .map(|value| FileConfigValue { value, source });
-    let protocol = typed
-        .and_then(|config| config.exporter_otlp_protocol.as_deref())
-        .map(|raw| -> Result<FileConfigValue<OtlpProtocol>> {
-            Ok(FileConfigValue {
-                value: OtlpProtocol::parse(raw, &format!("config file '{}'", path.display()))?,
-                source,
-            })
-        })
-        .transpose()?;
-
-    Ok((enabled, endpoint, protocol))
 }
 
 fn map_policies_config(
@@ -1711,7 +1504,6 @@ fn format_show_output(runtime: &RuntimeConfig, report_format: ReportFormat) -> S
                             runtime.log_file_mode.value.as_str(),
                             runtime.log_file_mode.source,
                         ),
-                        "otel": format_otel_resolved_json(runtime),
                         "timeout_ms": {
                             "value": runtime.timeout_ms.value,
                             "source": runtime.timeout_ms.source.as_str(),
@@ -1911,47 +1703,7 @@ fn format_observability_text_lines(runtime: &RuntimeConfig) -> Vec<String> {
             runtime.log_file_mode.value.as_str(),
             runtime.log_file_mode.source,
         ),
-        format_resolved_value_text(
-            "otel.enabled",
-            bool_text(runtime.otel_enabled.value),
-            runtime.otel_enabled.source,
-        ),
-        format_resolved_value_text(
-            "otel.exporter_otlp_endpoint",
-            runtime.otel_endpoint.value.as_str(),
-            runtime.otel_endpoint.source,
-        ),
-        format_resolved_value_text(
-            "otel.exporter_otlp_protocol",
-            runtime.otel_protocol.value.as_str(),
-            runtime.otel_protocol.source,
-        ),
     ]
-}
-
-fn format_otel_resolved_json(runtime: &RuntimeConfig) -> Value {
-    json!({
-        "enabled": format_resolved_value_json(
-            runtime.otel_enabled.value,
-            runtime.otel_enabled.source,
-        ),
-        "exporter_otlp_endpoint": format_resolved_value_json(
-            runtime.otel_endpoint.value.as_str(),
-            runtime.otel_endpoint.source,
-        ),
-        "exporter_otlp_protocol": format_resolved_value_json(
-            runtime.otel_protocol.value.as_str(),
-            runtime.otel_protocol.source,
-        ),
-    })
-}
-
-const fn bool_text(value: bool) -> &'static str {
-    if value {
-        "true"
-    } else {
-        "false"
-    }
 }
 
 fn format_resolved_value_json<T>(value: T, source: ValueSource) -> Value

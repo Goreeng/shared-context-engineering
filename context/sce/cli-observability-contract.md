@@ -19,12 +19,6 @@ Runtime observability now consumes the shared resolved observability config from
 - Invalid observability env values still fail invocation validation with actionable error text.
 - Invalid default-discovered observability config files no longer block runtime config resolution by themselves; they are skipped and resolution falls back to defaults.
 - After degraded observability config is constructed, startup emits one `warn`-level log per skipped discovered-file failure before command dispatch continues.
-- OpenTelemetry bootstrap is opt-in via resolved `otel.enabled` / `SCE_OTEL_ENABLED` (`true|false|1|0`, default `false`).
-- When OpenTelemetry is enabled, exporter config resolves from env first and config-file fallback second:
-  - `OTEL_EXPORTER_OTLP_ENDPOINT` (default `http://127.0.0.1:4317`, must be absolute `http(s)` URL)
-  - `OTEL_EXPORTER_OTLP_PROTOCOL` (`grpc` or `http/protobuf`, default `grpc`)
-- Invalid OTEL env values fail invocation validation with explicit remediation guidance.
-
 ## Repository-local default in this repo
 
 - This repository now ships a repo-local config at `.sce/config.json`.
@@ -49,7 +43,7 @@ Runtime observability now consumes the shared resolved observability config from
 - All `ClassifiedError` instances are logged via `Logger::log_classified_error()` before user-facing stderr diagnostics are written.
 - Event records include deterministic metadata keys used by automation (`command`, `failure_class`, `component` when applicable).
 - Error log records include `error_code` and `error_class` fields for structured observability.
-- Logger events are mirrored into tracing events so OTEL export can observe the same lifecycle signal set when enabled.
+
 - App runtime initializes tracing subscriber context before parse/dispatch and shuts down tracer provider on process exit.
 
 ## Format contract
@@ -67,8 +61,8 @@ Runtime observability now consumes the shared resolved observability config from
 - The concrete `services::observability::Logger` implements the trait while retaining the existing inherent methods and behavior.
 - `NoopLogger` is available from the same traits module for tests and future dependency-injected services that need a logger without side effects.
 - The same traits module exposes object-safe `services::observability::traits::Telemetry` with the current app subscriber boundary: `with_default_subscriber` for command-lifecycle execution.
-- The concrete `services::observability::TelemetryRuntime` implements the telemetry trait by delegating to its existing inherent method, preserving OTEL subscriber behavior.
-- `cli/src/app.rs` stores production logger and telemetry runtime instances behind `Arc<dyn Logger>` and `Arc<dyn Telemetry>` in `AppContext`, then passes that context through command execution without changing emitted events or OTEL behavior.
+- The concrete `services::observability::TelemetryRuntime` implements the telemetry trait by delegating to its existing inherent method.
+- `cli/src/app.rs` stores production logger and telemetry runtime instances behind `Arc<dyn Logger>` and `Arc<dyn Telemetry>` in `AppContext`, then passes that context through command execution.
 
 ## File sink safety contract
 
@@ -80,6 +74,6 @@ Runtime observability now consumes the shared resolved observability config from
 ## Ownership and verification
 
 - `cli/src/services/config/mod.rs` owns shared observability value resolution, config-file discovery/merge, and env-over-config precedence for runtime inputs.
-- `cli/src/services/observability.rs` owns runtime logger construction from resolved values, level filtering, record rendering, optional file sink lifecycle/permission enforcement, and OTEL runtime setup (`TelemetryRuntime`); `cli/src/services/observability/traits.rs` owns the logger and telemetry trait boundaries plus the no-op logger implementation.
+- `cli/src/services/observability.rs` owns runtime logger construction from resolved values, level filtering, record rendering, and optional file sink lifecycle/permission enforcement; `cli/src/services/observability/traits.rs` owns the logger and telemetry trait boundaries plus the no-op logger implementation.
 - `cli/src/app.rs` owns lifecycle event emission around parse/dispatch success and failure paths, resolves observability config before command dispatch, emits startup invalid-config warning events for skipped discovered config files, and wraps dispatch inside the observability subscriber context.
 - Contract behavior is covered by `services::observability::tests` and exercised in end-to-end app command tests.

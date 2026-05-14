@@ -4,7 +4,7 @@
 
 This contract documents the implemented `sce config` command behavior in `cli/src/services/config/mod.rs`, the canonical Pkl-authored `sce/config.json` schema artifact generated to `config/schema/sce-config.schema.json` and embedded there as `SCE_CONFIG_SCHEMA_JSON`, the typed serde DTO + mapping pipeline used for config-file parsing, and parser/dispatch wiring in `cli/src/app.rs`.
 
-The current implementation resolves flat logging keys plus nested `otel` keys with deterministic env-over-config precedence and source metadata, uses those resolved values in `cli/src/app.rs` / `cli/src/services/observability.rs` for runtime logging and OTEL bootstrap, exposes resolved-value inspection through `sce config show`, and keeps `sce config validate` focused on validation status plus errors/warnings.
+The current implementation resolves flat logging keys with deterministic env-over-config precedence and source metadata, uses those resolved values in `cli/src/app.rs` / `cli/src/services/observability.rs` for runtime logging, exposes resolved-value inspection through `sce config show`, and keeps `sce config validate` focused on validation status plus errors/warnings.
 
 ## Command surface
 
@@ -27,9 +27,9 @@ Repo-configured bash-tool policy values are config-file only in this task slice:
 
 Resolved observability values that currently have no CLI flag layer follow the same lower-precedence chain without a flag step:
 
-1. environment values (`SCE_LOG_FORMAT`, `SCE_LOG_FILE`, `SCE_LOG_FILE_MODE`, `SCE_OTEL_ENABLED`, `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_EXPORTER_OTLP_PROTOCOL`)
-2. config file values (`log_format`, `log_file`, `log_file_mode`, `otel.enabled`, `otel.exporter_otlp_endpoint`, `otel.exporter_otlp_protocol`)
-3. defaults where defined (`log_format=text`, `log_file_mode=truncate`, `otel.enabled=false`, `otel.exporter_otlp_endpoint=http://127.0.0.1:4317`, `otel.exporter_otlp_protocol=grpc`); `log_file` remains unset when no env/config value is present
+1. environment values (`SCE_LOG_FORMAT`, `SCE_LOG_FILE`, `SCE_LOG_FILE_MODE`)
+2. config file values (`log_format`, `log_file`, `log_file_mode`)
+3. defaults where defined (`log_format=text`, `log_file_mode=truncate`); `log_file` remains unset when no env/config value is present
 
 Supported auth-adjacent runtime keys can participate in one shared key-declared precedence path without defining CLI flags. Each key declares its config-file name, environment variable name, and whether a baked default is allowed. The shared resolver supports keys that allow a baked default and keys that intentionally omit one. The first implemented migrated key is `workos_client_id`, which resolves as:
 
@@ -56,12 +56,12 @@ When a default-discovered global or repo-local config file exists but fails JSON
 - The canonical JSON Schema artifact for both global and repo-local `sce/config.json` files is authored in `config/pkl/base/sce-config-schema.pkl` and generated to `config/schema/sce-config.schema.json`.
 - `cli/src/services/config/mod.rs` embeds that generated artifact at compile time as `SCE_CONFIG_SCHEMA_JSON` and uses it for runtime schema validation before mapping parsed files into typed serde DTOs.
 - `sce config validate` and `sce doctor` both validate config-file structure against that shared generated schema before applying Rust-owned semantic checks such as duplicate custom `argv_prefix` detection and redundancy warnings.
-- After schema validation, `cli/src/services/config/mod.rs` deserializes top-level and nested config structure (`otel`, `policies`, `policies.bash`, `policies.attribution_hooks`) into typed serde DTOs and applies focused Rust-owned mapping helpers for enum conversion, source attribution, and policy-specific semantic checks.
+- After schema validation, `cli/src/services/config/mod.rs` deserializes top-level and nested config structure (`policies`, `policies.bash`, `policies.attribution_hooks`) into typed serde DTOs and applies focused Rust-owned mapping helpers for enum conversion, source attribution, and policy-specific semantic checks.
 - The canonical top-level schema declaration `"$schema": "https://sce.crocoder.dev/config.json"` is a supported config key for both explicit and discovered `sce/config.json` files, including command-startup paths like `sce version` and other config-loading commands that parse config before normal command dispatch.
 - Startup/runtime config resolution now degrades gracefully only for default-discovered files: invalid discovered files are skipped and reported via collected `validation_errors`, while explicit `--config` / `SCE_CONFIG_FILE` targets still fail immediately on the same parse or validation errors.
 
 - Config file content must be valid JSON with a top-level object.
-- Allowed keys: `$schema`, `log_level`, `log_format`, `log_file`, `log_file_mode`, `timeout_ms`, `workos_client_id`, `otel`, `policies`.
+- Allowed keys: `$schema`, `log_level`, `log_format`, `log_file`, `log_file_mode`, `timeout_ms`, `workos_client_id`, `policies`.
 - Unknown keys fail validation.
 - `log_level` must be one of `error|warn|info|debug`.
 - `log_format` must be `text` or `json` when present.
@@ -70,10 +70,7 @@ When a default-discovered global or repo-local config file exists but fails JSON
 - `log_file_mode` requires `log_file`.
 - `timeout_ms` must be an unsigned integer.
 - `workos_client_id` must be a string when present.
-- `otel` must be an object when present and currently allows only `enabled`, `exporter_otlp_endpoint`, and `exporter_otlp_protocol`.
-- `otel.enabled` must be a boolean when present.
-- `otel.exporter_otlp_endpoint` must be an absolute `http(s)` URL when present.
-- `otel.exporter_otlp_protocol` must be `grpc` or `http/protobuf` when present.
+
 - `policies` must be an object when present and currently allows only `bash`.
 - `policies.bash` must be an object when present and currently allows only `presets` and `custom`.
 - `policies.bash.presets` must be an array of unique built-in preset IDs: `forbid-git-all`, `forbid-git-commit`, `use-pnpm-over-npm`, `use-bun-over-npm`, `use-nix-flake-over-cargo`.
@@ -91,13 +88,13 @@ When a default-discovered global or repo-local config file exists but fails JSON
 - `show` reports discovered config files as `config_paths` (JSON) / `Config files:` (text).
 - Resolved values in `show` continue to report `source`; when source is `config_file`, output also reports a deterministic `config_source` value (`flag`, `env`, `default_discovered_global`, `default_discovered_local`).
 - `show` includes migrated supported auth keys in `result.resolved`.
-- `show` includes resolved observability values directly in `result.resolved`, preserving flat logging keys (`log_level`, `log_format`, `log_file`, `log_file_mode`) plus nested `otel.{enabled,exporter_otlp_endpoint,exporter_otlp_protocol}`.
+- `show` includes resolved observability values directly in `result.resolved`, preserving flat logging keys (`log_level`, `log_format`, `log_file`, `log_file_mode`).
 - `validate` text output is limited to `SCE config validation`, `Validation issues`, and `Validation warnings` lines.
 - `validate` JSON output is limited to `result.command`, `result.valid`, `result.issues`, and `result.warnings`.
 - `show` includes resolved bash-tool policies under `result.resolved.policies.bash`.
 - Bash-policy output includes resolved preset IDs, expanded custom entries (`id`, `match.argv_prefix`, `message`), and config-file source metadata when present.
 - `show` text output renders `policies.bash` as a single deterministic line and reports `(unset)` when no policy config resolves.
-- `show` text output renders observability values as deterministic per-key lines, using `otel.` prefixes for nested OTEL keys and reporting `(unset)` for `log_file` when no value resolves.
+- `show` text output renders observability values as deterministic per-key lines, reporting `(unset)` for `log_file` when no value resolves.
 - `show` and `validate` both include `warnings`; this list is empty for normal valid config and carries deterministic redundancy messaging for valid-but-overlapping preset combinations such as `forbid-git-all` plus `forbid-git-commit`.
 - `validate` reports skipped invalid discovered config files through `result.valid = false` plus `result.issues`, using the collected `validation_errors` verbatim in both text and JSON output rather than hard-failing before render.
 - `validate` reaches its normal renderer for invalid discovered config; invalid discovered config is reported as a validation result rather than causing a pre-render startup failure.

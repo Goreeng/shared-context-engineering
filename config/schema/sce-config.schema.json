@@ -43,27 +43,6 @@
     "workos_client_id": {
       "type": "string"
     },
-    "otel": {
-      "type": "object",
-      "properties": {
-        "enabled": {
-          "type": "boolean"
-        },
-        "exporter_otlp_endpoint": {
-          "type": "string",
-          "pattern": "^https?://",
-          "format": "uri"
-        },
-        "exporter_otlp_protocol": {
-          "type": "string",
-          "enum": [
-            "grpc",
-            "http/protobuf"
-          ]
-        }
-      },
-      "additionalProperties": false
-    },
     "policies": {
       "type": "object",
       "properties": {
