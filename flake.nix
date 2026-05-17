@@ -9,7 +9,7 @@
     crane.url = "github:ipetkov/crane";
     opencode.url = "github:anomalyco/opencode/dev";
     opencode-nixpkgs.follows = "opencode/nixpkgs";
-    turso.url = "github:tursodatabase/turso/09c149a776b5140bfff3e3dee1dc786177d2615a";
+    turso.url = "github:tursodatabase/turso/809b4410fc047ae150322f1bcc779c06eb84deca";
     turso.inputs.nixpkgs.follows = "nixpkgs";
     turso.inputs.flake-utils.follows = "flake-utils";
     turso.inputs.crane.follows = "crane";
@@ -39,7 +39,7 @@
           inherit system;
         };
 
-        rustVersion = "1.93.1";
+        rustVersion = "1.95.0";
 
         rustToolchain = pkgs.rust-bin.stable.${rustVersion}.default.override {
           extensions = [
@@ -1058,8 +1058,8 @@
               jq
               pkl
               typescript
-              nodePackages.typescript-language-server
-              nodePackages.vscode-json-languageserver
+              typescript-language-server
+              vscode-json-languageserver
               opencodePackage
               rust-analyzer
               scePackage
