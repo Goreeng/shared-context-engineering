@@ -83,8 +83,8 @@ fn ensure_default_store() -> Result<()> {
 /// # Errors
 /// - Returns an error if the credential store cannot be initialised on
 ///   the current platform.
-    /// - Returns an error if the database file exists but the keyring entry
-    ///   is missing (e.g. keyring was cleared on Linux).
+/// - Returns an error if the database file exists but the keyring entry
+///   is missing (e.g. keyring was cleared on Linux).
 /// - Returns an error if key generation or credential store I/O fails.
 pub fn get_or_create_encryption_key(db_path: &Path, db_name: &str) -> Result<String> {
     ensure_default_store()?;
