@@ -31,6 +31,16 @@
             ]
           },
           "message": "This repository prefers `nix flake check` over direct `cargo fmt --check`. Run `nix flake check` for verification; keep `cargo fmt` for autofix-only formatting."
+        },
+        {
+          "id": "use-nix-flake-check-over-cargo-check",
+          "match": {
+            "argv_prefix": [
+              "cargo",
+              "check"
+            ]
+          },
+          "message": "This repository prefers `nix flake check` over direct `cargo check`. Run `nix flake check` instead."
         }
       ]
     }
