@@ -1092,6 +1092,7 @@
               bunPackage
               jq
               pkl
+              pkl-lsp
               typescript
               typescript-language-server
               vscode-json-languageserver
@@ -1110,6 +1111,7 @@
             echo "- bun: $(version_of bun)"
             echo "- biome: $(version_of biome)"
             echo "- pkl: $(version_of pkl)"
+            echo "- pkl-lsp: $(version_of pkl-lsp)"
             echo "- tsc: $(version_of tsc)"
             echo "- tsserver-lsp: $(version_of typescript-language-server)"
             echo "- rust: $(version_of rustc)"
