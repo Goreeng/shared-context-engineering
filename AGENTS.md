@@ -81,7 +81,6 @@ Run these from `config/lib/bash-policy-plugin/` when working on the Bun-owned Op
 
 ## CI and release hints
 
-- GitHub Actions publish Tessl tiles from `config/.opencode/skills/**` and `config/.claude/skills/**`.
 - Release workflow packages agent files from `config/.opencode/agent/Shared Context.md` and `config/.claude/agents/shared-context.md`.
 - Root `flake.nix` packages `sce` through Crane's `buildDepsOnly` + `buildPackage` pipeline and runs `cli-tests`, `cli-clippy`, and `cli-fmt` through Crane-backed checks.
 - Changes under generated config trees may need a Pkl regeneration or parity check.

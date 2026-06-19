@@ -10,10 +10,6 @@ local opencodeBashPolicyPluginSource = read("../lib/bash-policy-plugin/opencode-
 local opencodeAgentTracePluginSource = read("../lib/agent-trace-plugin/opencode-sce-agent-trace-plugin.ts").text
 output {
   files {
-    [".github/workflows/publish-tiles.yml"] {
-      text = common.publishTilesWorkflow
-    }
-
     for (slug, document in opencode.agents) {
       ["config/.opencode/agent/\(document.title).md"] {
         text = document.rendered
@@ -54,11 +50,6 @@ output {
         text = document.rendered
       }
     }
-    for (slug, document in opencode.skillTiles) {
-      ["config/.opencode/skills/\(slug)/tile.json"] {
-        text = document.rendered
-      }
-    }
     for (slug, document in opencode_automated.skills) {
       ["config/automated/.opencode/skills/\(slug)/SKILL.md"] {
         text = document.rendered
@@ -69,12 +60,6 @@ output {
         text = document.rendered
       }
     }
-    for (slug, document in claude.skillTiles) {
-      ["config/.claude/skills/\(slug)/tile.json"] {
-        text = document.rendered
-      }
-    }
-
     ["config/.opencode/lib/bash-policy-presets.json"] {
       text = bashPolicyPresetCatalogSource
     }

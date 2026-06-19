@@ -31,7 +31,6 @@ pkl eval -m "$tmp_dir" config/pkl/generate.pkl >/dev/null
 # config/pkl/generate.pkl. Whenever generate.pkl gains or loses outputs,
 # update this array to match so parity checks remain accurate.
 paths=(
-  ".github/workflows/publish-tiles.yml"
   "config/.opencode/agent"
   "config/.opencode/command"
   "config/.opencode/skills"

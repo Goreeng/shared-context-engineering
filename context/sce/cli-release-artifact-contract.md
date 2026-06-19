@@ -48,7 +48,6 @@ This file captures the current shared release artifact foundation plus the appro
   - `.github/workflows/release-sce-linux-arm.yml`
   - `.github/workflows/release-sce-macos-arm.yml`
 - The reusable Linux ARM workflow builds canonical `aarch64-unknown-linux-gnu` artifacts on an ARM Linux runner, and the top-level release orchestrator now requires and publishes that lane alongside the other platform workflows.
-- `.github/workflows/release-agents.yml` remains Tessl/agent-file release automation and is not the CLI release workflow.
 
 ## Current orchestrated release targets in automation
 

@@ -153,24 +153,3 @@ skills {
     }
   }
 }
-
-skillTiles {
-  for (unitSlug, _ in shared.skills) {
-    [unitSlug] = new common.RenderedTextFile {
-      slug = unitSlug
-      rendered = """
-{
-  \"name\": \"\(common.tileWorkspace)/\(unitSlug)\",
-  \"version\": \"\(common.tileVersion)\",
-  \"summary\": \"\(common.skillTileSummaries[unitSlug])\",
-  \"private\": false,
-  \"skills\": {
-    \"\(unitSlug)\": {
-      \"path\": \"SKILL.md\"
-    }
-  }
-}
-"""
-    }
-  }
-}

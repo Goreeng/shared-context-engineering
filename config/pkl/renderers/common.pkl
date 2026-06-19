@@ -14,9 +14,6 @@ class RenderedTextFile {
   rendered: String
 }
 
-tileWorkspace = "crocoder-dev"
-tileVersion = read("../../../.version").text.trim()
-
 sceGeneratedOpenCodePlugins = List(
   opencode.sce_bash_policy_plugin,
   opencode.sce_agent_trace_plugin
@@ -24,51 +21,6 @@ sceGeneratedOpenCodePlugins = List(
 sceGeneratedOpenCodePluginPathsJson = sceGeneratedOpenCodePlugins
   .map((plugin) -> plugin.path_json)
   .join(", ")
-
-sharedSkillSlugs = shared.skills.toMap().keys.toList().sort()
-
-publishTilePaths = sharedSkillSlugs.flatMap((slug) -> List(
-  "config/.opencode/skills/\(slug)",
-  "config/.claude/skills/\(slug)"
-))
-
-publishTilesWorkflow = """
-name: Publish Tessl tiles
-
-permissions:
-  id-token: write
-  contents: read
-
-on:
-  push:
-    branches:
-      - main
-    paths:
-      - \"config/.opencode/skills/**\"
-      - \"config/.claude/skills/**\"
-      - \".github/workflows/publish-tiles.yml\"
-      - \".version\"
-  workflow_dispatch:
-
-jobs:
-  publish:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        path:
-\(publishTilePaths.map((path) -> "          - \(path)").join("\n"))
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v6
-
-      - name: Publish tile
-        if: ${{ hashFiles(format('{0}/tile.json', matrix.path)) != '' }}
-        uses: tesslio/publish@main
-        with:
-          token: ${{ secrets.TESSL_API_TOKEN }}
-          path: ${{ matrix.path }}
-"""
 
 commandDescriptions = new Mapping {
   ["next-task"] = "Run `sce-plan-review` -> `sce-task-execution` -> `sce-context-sync` for one approved SCE task"
@@ -93,14 +45,3 @@ skillDescriptions = new Mapping {
   ["sce-validation"] = "Use when user wants to Run final plan validation and cleanup with evidence capture."
 }
 
-skillTileSummaries = new Mapping {
-  ["sce-bootstrap-context"] = "Create the baseline Shared Context Engineering context directory structure."
-  ["sce-context-sync"] = "Sync Shared Context Engineering context files with implemented code changes."
-  ["sce-handover-writer"] = "Create structured handover notes for Shared Context Engineering tasks."
-  ["sce-plan-authoring"] = "Author structured Shared Context Engineering implementation plans."
-  ["sce-plan-authoring-interactive"] = "Author Shared Context Engineering implementation plans with interactive clarification."
-  ["sce-plan-review"] = "Review Shared Context Engineering plans and identify the next ready task."
-  ["sce-task-execution"] = "Execute one approved Shared Context Engineering plan task with guardrails."
-  ["sce-atomic-commit"] = "Write atomic, repo-style git commits from a change summary or diff."
-  ["sce-validation"] = "Run final validation for a Shared Context Engineering plan."
-}

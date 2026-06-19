@@ -83,7 +83,8 @@ fn generate_migration_manifest() -> io::Result<()> {
         output.push_str("];\n\n");
     }
 
-    write_if_changed(&destination_path, output.as_bytes())
+    let trimmed = format!("{}\n", output.trim_end());
+    write_if_changed(&destination_path, trimmed.as_bytes())
 }
 
 fn emit_git_commit() {
