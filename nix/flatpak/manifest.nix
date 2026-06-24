@@ -45,6 +45,7 @@ let
         buildsystem = "simple";
         build-options = {
           append-path = "/usr/lib/sdk/rust-stable/bin";
+          build-args = [ "--share=network" ];
           env = {
             CARGO_HOME = "/run/build/sce/cargo";
           };
