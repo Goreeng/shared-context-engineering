@@ -89,6 +89,13 @@
 - For `/commit`, keep the command body thin and profile-aware: manual generated commands retain staging-confirmation and proposal-only gates, while the automated OpenCode command skips staging confirmation, generates exactly one staged commit message, and executes one staged `git commit`; delegate commit-message grammar, the single-message contract, and the staged-plan rule (cite affected plan slug(s) and updated task ID(s) when `context/plans/*.md` is staged, otherwise stop for clarification) to `sce-atomic-commit`.
 - Preserve mandatory gates (readiness confirmation, implementation stop, final-task validation trigger) while removing duplicated procedural prose from command text.
 
+## Context HTML documentation generation
+
+- Use the generated `sce-context-generate-html` skill when a user wants browsable project documentation from shared context.
+- Run `sce-context-sync` before generating HTML so `context/` remains the source of truth.
+- Write deterministic static output under `context/html/`, with `context/html/index.html` as the default human-readable entrypoint.
+- Keep CSS inline or local to `context/html/`, avoid new dependencies by default, and verify diagrams render visibly in browser-compatible HTML rather than raw unsupported syntax.
+
 ## Multi-file generation entrypoint
 
 - Use `config/pkl/generate.pkl` as the single generation module for authored config outputs.

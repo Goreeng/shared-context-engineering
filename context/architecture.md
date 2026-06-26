@@ -59,7 +59,7 @@ Generated authored classes:
 
 - agent definitions
 - command definitions
-- skill definitions
+- skill definitions, including `sce-context-generate-html` for synced-context static HTML documentation under `context/html/index.html`
 - shared runtime library files
 - Claude project settings
 - OpenCode plugin entrypoints
