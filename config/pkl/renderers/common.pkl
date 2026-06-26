@@ -36,6 +36,7 @@ commandDescriptions = new Mapping {
 skillDescriptions = new Mapping {
   ["sce-bootstrap-context"] = "Use when user wants to Bootstrap SCE baseline context directory when missing."
   ["sce-context-sync"] = "Use when user wants to Synchronize context files to match current code behavior after task execution."
+  ["sce-context-generate-html"] = "Use when user wants to generate static human-readable HTML documentation from refreshed SCE context files under `context/html/`."
   ["sce-handover-writer"] = "Use when user wants to create a structured SCE handover for the current task."
   ["sce-plan-authoring"] = "Use when user wants to Create or update an SCE implementation plan with scoped atomic tasks."
   ["sce-plan-authoring-interactive"] = "Use when user wants to Create or update an SCE implementation plan with interactive clarification."
@@ -44,4 +45,3 @@ skillDescriptions = new Mapping {
   ["sce-atomic-commit"] = "Write atomic, repo-style git commits from a change summary or diff. Use when preparing commit messages, splitting work into coherent commits, or reviewing whether a commit is too broad."
   ["sce-validation"] = "Use when user wants to Run final plan validation and cleanup with evidence capture."
 }
-

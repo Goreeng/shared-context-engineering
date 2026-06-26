@@ -82,6 +82,13 @@ skills = new Mapping {
     title = code.skills["sce-context-sync"].title
     canonicalBody = code.skills["sce-context-sync"].canonicalBody
   }
+  ["sce-context-generate-html"] = new common.ContentUnit {
+    id = "skill.sce-context-generate-html"
+    kind = "skill"
+    slug = "sce-context-generate-html"
+    title = code.skills["sce-context-generate-html"].title
+    canonicalBody = code.skills["sce-context-generate-html"].canonicalBody
+  }
   ["sce-handover-writer"] = new common.ContentUnit {
     id = "skill.sce-handover-writer"
     kind = "skill"
