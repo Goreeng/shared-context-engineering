@@ -32,12 +32,14 @@ The repository's generated config model makes `config/.opencode/**`, `config/aut
 
 ## Task stack
 
-- [ ] T01: `Run context freshness pass for generated-skill baseline` (status:todo)
+- [x] T01: `Run context freshness pass for generated-skill baseline` (status:done)
   - Task ID: T01
   - Goal: Run the existing `sce-context-sync` workflow before adding the new skill so planning/implementation starts from current context truth.
   - Boundaries (in/out of scope): In - load/follow `sce-context-sync`, inspect relevant generated-config and context files, repair focused stale context if found. Out - adding the new HTML skill or regenerating config outputs.
   - Done when: Relevant root/domain context files are verified against code truth, any required focused context repairs are committed to `context/`, and the implementer records whether the upcoming change is root-important or verify-only.
   - Verification notes (commands or checks): Follow the `sce-context-sync` checklist; verify `context/architecture.md`, `context/patterns.md`, `context/context-map.md`, and relevant generated-config context references align with current code/source files.
+  - Completion evidence (2026-06-26): Ran `sce-context-sync` freshness review against generated-config context. Repaired focused stale context in `context/architecture.md` (manual + automated OpenCode + Claude target-tree wording; removed stale Claude TypeScript plugin-output claim), `context/sce/opencode-agent-trace-plugin-runtime.md` (aligned OpenCode event names with `message.updated` / `message.part.updated` code truth), `context/context-map.md` (updated OpenCode plugin runtime summary), and `context/overview.md` (active hook-intake wording). Targeted verification: `git diff --check -- context/overview.md context/architecture.md context/sce/opencode-agent-trace-plugin-runtime.md context/context-map.md context/plans/sce-context-generate-html-skill.md` passed; `test ! -d config/.claude/plugins && test ! -d .claude/plugins` passed; targeted `rg` stale-wording check over edited context files returned no matches; targeted generated-config search confirmed `config/pkl/generate.pkl` emits OpenCode plugin outputs only for `config/.opencode/plugins/sce-agent-trace.ts` and `config/automated/.opencode/plugins/sce-agent-trace.ts`; edited context files are under 250 lines. Attempted `nix run .#pkl-check-generated`, but this environment has no `nix` executable (`zsh:1: command not found: nix`), so full Nix parity/check validation remains for a Nix-equipped session.
+  - Context-sync classification for upcoming change: root-important. Adding a generated SCE skill changes the cross-target generated skill surface and `context/html/` documentation convention, so later tasks should update durable root/domain context rather than treating the feature as verify-only.
 
 - [ ] T02: `Author canonical HTML-doc skill contract` (status:todo)
   - Task ID: T02

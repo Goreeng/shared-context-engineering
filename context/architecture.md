@@ -2,9 +2,10 @@
 
 ## Config generation boundary (current approved design)
 
-The repository keeps two parallel config target trees:
+The repository keeps three parallel config target trees:
 
 - `config/.opencode`
+- `config/automated/.opencode`
 - `config/.claude`
 
 For authored config content, generation is standardized around one canonical Pkl source model with target-specific rendering applied later in the pipeline.
@@ -50,7 +51,7 @@ Renderer modules apply target-specific metadata/frontmatter rules while reusing 
 - Target-specific metadata tables, including skill frontmatter descriptions, are isolated in `config/pkl/renderers/opencode-metadata.pkl`, `config/pkl/renderers/opencode-automated-metadata.pkl`, and `config/pkl/renderers/claude-metadata.pkl`.
 - Metadata key coverage is enforced by `config/pkl/renderers/metadata-coverage-check.pkl`, which resolves all required lookup keys for both targets and fails evaluation on missing entries.
 - Both renderers expose per-class rendered document objects (`agents`, `commands`, `skills`) consumed by `config/pkl/generate.pkl`.
-- `config/pkl/generate.pkl` emits deterministic `output.files` mappings for all authored generated targets: OpenCode/Claude agents, commands, skills, Claude project settings, the Claude agent-trace plugin entrypoint under `config/.claude/plugins/`, shared bash-policy preset assets under `lib/`, the OpenCode plugin entrypoints under `plugins/` (currently `sce-bash-policy.ts` and `sce-agent-trace.ts`), generated OpenCode `package.json` and `opencode.json` manifests for manual and automated profiles, and the generated `sce/config.json` schema artifact at `config/schema/sce-config.schema.json`.
+- `config/pkl/generate.pkl` emits deterministic `output.files` mappings for all authored generated targets: OpenCode/Claude agents, commands, skills, Claude project settings, shared bash-policy preset assets under `lib/`, the OpenCode plugin entrypoints under `plugins/` (currently `sce-bash-policy.ts` and `sce-agent-trace.ts` for manual and automated profiles), generated OpenCode `package.json` and `opencode.json` manifests for manual and automated profiles, and the generated `sce/config.json` schema artifact at `config/schema/sce-config.schema.json`. Claude Agent Trace and bash-policy handling is registered through generated `.claude/settings.json` command hooks rather than generated Claude TypeScript plugin files.
 - Generated-file warning markers are not injected by the generator: Markdown outputs render deterministic frontmatter + body, and shared library outputs are emitted without a leading generated warning header.
 - `config/pkl/check-generated.sh` is intentionally dev-shell scoped (`nix develop -c ...`): it requires `IN_NIX_SHELL`, runs `pkl eval -m <tmp> config/pkl/generate.pkl`, and fails when generated-owned paths drift.
 

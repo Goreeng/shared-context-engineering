@@ -8,12 +8,12 @@ The Claude TypeScript agent-trace runtime was removed in T07 of the `claude-rust
 
 ## Event capture baseline
 
-- The plugin registers for `message`, `message.part`, `session.created`, and `session.updated` events.
+- The plugin registers for `message.updated`, `message.part.updated`, `session.created`, and `session.updated` events.
 - Conversation-trace handoff uses the current mixed-batch STDIN shape expected by Rust: `{ "payloads": [{ "type": "message" | "message.part", ... }] }`. The producer does not emit top-level `type` envelopes.
-- For every captured `message` event, the plugin checks for `summary.diffs` via `buildPatchConversationTracePayload`:
+- For every captured `message.updated` event, the plugin checks for `summary.diffs` via `buildPatchConversationTracePayload`:
   - **When diffs exist**: builds one mixed `-patch` conversation-trace envelope containing the synthetic parent `message` item with `message_id = "${id}-patch"` plus all per-diff `message.part` patch items, then invokes `sce hooks conversation-trace` once. The original `message` event is replaced — no original `message` payload is sent.
   - **When no diffs exist**: builds one mixed envelope containing a single `message` item via `buildConversationTracePayload` and invokes `sce hooks conversation-trace` over STDIN JSON.
-- For every captured `message.part` event, the plugin builds one mixed envelope containing a single `message.part` item via `buildMessagePartConversationTracePayload` and invokes `sce hooks conversation-trace` over STDIN JSON; only `text` and `reasoning` part types with non-empty `text` are dispatched.
+- For every captured `message.part.updated` event, the plugin builds one mixed envelope containing a single `message.part` item via `buildMessagePartConversationTracePayload` and invokes `sce hooks conversation-trace` over STDIN JSON; only `text` and `reasoning` part types with non-empty `text` are dispatched.
 - Existing diff-trace capture remains filtered to user messages with usable diffs.
 - When diff extraction succeeds, the plugin invokes `sce hooks diff-trace` after conversation-trace handoff and sends `{ sessionID, diff, time, model_id, tool_name, tool_version }` over STDIN JSON (`tool_name` is always `"opencode"`; `tool_version` is captured from session lifecycle events when available).
 - The plugin no longer writes diff-trace artifacts or database rows directly; the Rust `diff-trace` hook path owns AgentTraceDb insertion plus collision-safe timestamp+attempt artifact writes.
@@ -32,7 +32,7 @@ The plugin defines `extractDiffTracePayload(event)` as a typed guard/extraction 
 
 Returns `{ sessionID, diff, time, model_id }` only when all checks pass:
 
-1. `event.type === "message"`
+1. `event.type === "message.updated"`
 2. `event.properties.info.role === "user"` (assistant, system, and other roles are skipped)
 3. `event.properties.info.summary?.diffs` exists and is non-empty
 4. Each entry contributes only its `patch` field when present; entries without `patch` are skipped
@@ -45,7 +45,7 @@ Otherwise, the helper returns `undefined`.
 
 ## Patch conversation trace
 
-The `buildPatchConversationTracePayload(event)` helper processes `message` events that carry `summary.diffs`. When the event has diff items, it returns one mixed `ConversationTracePayload` envelope containing the synthetic parent item plus any usable patch part items; when no diff entries are present, it returns `undefined`.
+The `buildPatchConversationTracePayload(event)` helper processes `message.updated` events that carry `summary.diffs`. When the event has diff items, it returns one mixed `ConversationTracePayload` envelope containing the synthetic parent item plus any usable patch part items; when no diff entries are present, it returns `undefined`.
 
 ### Payload shape when diffs exist
 
@@ -74,10 +74,10 @@ When `buildPatchConversationTracePayload` returns `undefined` (no diff entries),
 ## Current usage boundary
 
 - `recordConversationTrace(repoRoot, event)` branches on event type:
-  - For `message` events: calls `buildPatchConversationTracePayload` first.
+  - For `message.updated` events: calls `buildPatchConversationTracePayload` first.
     - If a patch payload is returned (diff entries exist), dispatches it once — the original `message` payload is not sent.
     - If `undefined` (no diffs), sends the original `message` payload as one mixed envelope via `buildConversationTracePayload`.
-  - For `message.part` events (only `text` and `reasoning` with non-empty `text`): uses `buildMessagePartConversationTracePayload`.
+  - For `message.part.updated` events (only `text` and `reasoning` with non-empty `text`): uses `buildMessagePartConversationTracePayload`.
 - The `message` conversation-trace batch (no-diff fallback) maps OpenCode event fields mechanically into a `payloads[0]` item with `type: "message"`, `session_id`, `message_id`, `role`, and `generated_at_unix_ms`; it does not emit message-level `agent` or `summary_diffs` fields and does not duplicate Rust hook validation.
 - `buildMessagePartConversationTracePayload(event)` maps `event.properties.part.sessionID`, `messageID`, `type`, and `text` into a `payloads[0]` item with `type: "message.part"`, `session_id`, `message_id`, `part_type`, and `text`, and uses `Date.now()` for `generated_at_unix_ms`.
 - The diff extraction seam is internal to the source module and is used by `buildTrace` at runtime.
