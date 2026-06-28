@@ -77,12 +77,44 @@ The repository's generated config model makes `config/.opencode/**`, `config/aut
   - Completion evidence (2026-06-26): Added focused current-state documentation at `context/sce/context-html-generation-skill.md` covering the generated `sce-context-generate-html` skill surface, generated target paths, canonical Pkl ownership, required pre-generation `sce-context-sync`, and `context/html/index.html` output convention. Updated discoverability/current-state references in `context/context-map.md`, `context/overview.md`, `context/architecture.md`, `context/patterns.md`, and `context/glossary.md` without duplicating the full skill body. Targeted verification passed: `git diff --check -- context/context-map.md context/overview.md context/architecture.md context/patterns.md context/glossary.md context/sce/context-html-generation-skill.md context/plans/sce-context-generate-html-skill.md`; targeted `rg` confirmed `sce-context-generate-html`, `context/html/index.html`, and the focused domain file links are discoverable; `wc -l` reported edited context files under 250 lines (`context/sce/context-html-generation-skill.md` 26, `context/context-map.md` 81, `context/overview.md` 122, `context/architecture.md` 160, `context/patterns.md` 186, `context/glossary.md` 207). `IN_NIX_SHELL=impure ./config/pkl/check-generated.sh` reported generated outputs are up to date. Attempted `nix run .#pkl-check-generated`, but this environment has no `nix` executable (`zsh:1: command not found: nix`), so Nix-backed parity/check validation remains for T06 or a Nix-equipped session.
   - Context-sync classification: root-important. This task documents a generated cross-target skill surface and the new `context/html/` documentation convention, so focused root/domain context edits were required and completed.
 
-- [ ] T06: `Validate generated skill and cleanup` (status:todo)
+- [x] T06: `Validate generated skill and cleanup` (status:done)
   - Task ID: T06
   - Goal: Perform final validation and cleanup for the plan.
   - Boundaries (in/out of scope): In - run repository validation, generated parity checks, confirm generated outputs and context are clean, remove temporary artifacts. Out - additional feature expansion beyond the new skill.
   - Done when: `nix run .#pkl-check-generated` and `nix flake check` pass or any failures are documented with clear blockers; generated outputs are deterministic; no temporary files remain outside approved `context/tmp/` usage; the plan records validation evidence.
   - Verification notes (commands or checks): `nix run .#pkl-check-generated`; `nix flake check`; final `sce-context-sync` verification that feature documentation exists and is linked.
+  - Completion evidence (2026-06-28): Required Nix-backed final checks were attempted but blocked in this environment because `nix` is not installed: `nix run .#pkl-check-generated` exited 127 with `zsh:1: command not found: nix`, and `nix flake check` exited 127 with the same diagnostic. Host fallback validation passed: `IN_NIX_SHELL=impure ./config/pkl/check-generated.sh` reported `Generated outputs are up to date.`; `pkl eval config/pkl/base/shared-content.pkl config/pkl/base/shared-content-automated.pkl config/pkl/renderers/metadata-coverage-check.pkl` passed; targeted `rg` confirmed `sce-context-generate-html`, required `sce-context-sync`, `context/html/index.html`, and diagram requirements in the generated OpenCode manual, OpenCode automated, and Claude skill outputs plus linked context documentation; targeted `git diff --check -- ...` passed for the plan, generated skill outputs, and relevant context files. A targeted temporary-artifact scan excluding `.git`, `context/tmp`, and `node_modules` found no `*~`, `*.tmp`, `.DS_Store`, or `*.bak` cleanup candidates. Existing unrelated root `.opencode/**` worktree changes were observed and left untouched. Final context-sync verification confirmed `context/sce/context-html-generation-skill.md` exists and is linked from `context/context-map.md`, with no additional context drift found for this validation-only task.
+  - Context-sync classification: verify-only. This final validation task did not change the generated skill behavior or documentation contract beyond recording validation evidence in the active plan; durable current-state context already represents the completed skill surface and output convention.
+
+## Validation Report
+
+### Commands run
+
+- `nix run .#pkl-check-generated` -> exit 127 (`zsh:1: command not found: nix`)
+- `nix flake check` -> exit 127 (`zsh:1: command not found: nix`)
+- `IN_NIX_SHELL=impure ./config/pkl/check-generated.sh` -> exit 0 (`Generated outputs are up to date.`)
+- `pkl eval config/pkl/base/shared-content.pkl config/pkl/base/shared-content-automated.pkl config/pkl/renderers/metadata-coverage-check.pkl` -> exit 0
+- `git diff --check -- ...` for the plan, generated skill outputs, and relevant context files -> exit 0
+- Targeted `rg` checks for `sce-context-generate-html`, `sce-context-sync`, `context/html/index.html`, and diagram requirements -> exit 0
+- Targeted temporary-artifact scan excluding `.git`, `context/tmp`, and `node_modules` -> exit 0 with no cleanup candidates
+
+### Failed checks and follow-ups
+
+- Required Nix checks could not run because this environment has no `nix` executable. Re-run `nix run .#pkl-check-generated` and `nix flake check` in a Nix-equipped environment before release/sign-off that requires Nix-backed validation.
+
+### Success-criteria verification
+
+- [x] Generated skill exists at `config/.opencode/skills/sce-context-generate-html/SKILL.md` and equivalent automated OpenCode / Claude generated targets.
+- [x] Skill body requires `sce-context-sync` before HTML generation.
+- [x] Skill body defines `context/html/index.html` as the deterministic browser entrypoint.
+- [x] Skill body requires overview-derived content, local/inline CSS, helpful diagrams, and browser-visible diagram rendering checks.
+- [x] Canonical Pkl sources and metadata evaluate successfully with host Pkl.
+- [x] Generated-output parity fallback reports no drift.
+- [x] Durable context documents and links the generated skill surface through `context/sce/context-html-generation-skill.md` and `context/context-map.md`.
+
+### Residual risks
+
+- Nix-backed parity/full flake validation remains unexecuted in this environment due to missing `nix`; fallback checks indicate generated outputs are deterministic and context is aligned.
 
 ## Open questions
 
