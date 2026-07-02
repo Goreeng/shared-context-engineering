@@ -28,7 +28,7 @@
 - Expose operational workflows as flake apps so commands are stable and system-mapped across supported `flake-utils` default systems.
 - Current repo command contracts:
 - For flake app outputs, include `meta.description` so `nix flake check` app validation stays warning-free.
-- When install/integration coverage is heavier than the default repository validation baseline, expose it as an explicit opt-in flake app instead of adding it to `checks.<system>` prematurely.
+- Do not keep obsolete flake app entrypoints as compatibility shims after an integration runner is removed; remove the app and any dedicated checks together unless a replacement implementation is explicitly approved.
 - For Flatpak local/release packaging, see `context/sce/flatpak-distribution-patterns.md` for the full Flatpak-specific pattern catalog.
 
 ## Install/distribution rollout
@@ -145,7 +145,7 @@
 - For hosted rewrite mapping seams, resolve candidates deterministically in strict precedence order (patch-id exact, then range-diff score, then fuzzy score), classify top-score ties as `ambiguous`, enforce low-confidence unresolved behavior below `0.60`, and preserve stable outcome ordering via canonical candidate SHA sorting.
 - For hosted reconciliation observability, publish run-level mapped/unmapped counts, confidence histogram buckets, runtime timing, and normalized error-class labels so retry/quality drift can be monitored without requiring a full dashboard surface.
 - Keep crate-local onboarding docs in `cli/README.md` and sanity-check command examples against actual `sce` output whenever command messaging changes.
-- Keep Rust verification in flake checks under stable named derivations re-exported by the root flake: `checks.<system>.cli-tests`, `checks.<system>.cli-clippy`, `checks.<system>.cli-fmt`, `checks.<system>.integrations-install-tests`, `checks.<system>.integrations-install-clippy`, `checks.<system>.integrations-install-fmt`, and `checks.<system>.workflow-actionlint`.
+- Keep Rust verification in flake checks under stable named derivations re-exported by the root flake: `checks.<system>.cli-tests`, `checks.<system>.cli-clippy`, `checks.<system>.cli-fmt`, and `checks.<system>.workflow-actionlint`.
 - In `flake.nix`, select the Rust toolchain via an explicit Rust overlay (`rust-overlay`) and thread that toolchain through Crane package/check derivations so CLI builds and checks do not rely on implicit nixpkgs Rust defaults.
 - For installable CLI release surfaces in the root flake, expose an explicit named package plus default alias (`packages.sce` and `packages.default = packages.sce`) and pair it with a runnable app output (`apps.sce`) that points to the packaged binary path.
 - For root-flake CLI release metadata, source the package/check version from repo-root `.version` and trim it at eval time so packaged outputs stay aligned without hardcoded semver strings in `flake.nix`.

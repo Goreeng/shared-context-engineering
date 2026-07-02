@@ -15,11 +15,6 @@ updates:
     schedule:
       interval: daily
 
-  - package-ecosystem: cargo
-    directory: /integrations/install
-    schedule:
-      interval: daily
-
   - package-ecosystem: npm
     directory: /npm
     schedule:
