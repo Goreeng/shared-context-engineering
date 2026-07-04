@@ -22,6 +22,7 @@ Feature/domain context:
 - `context/sce/shared-context-plan-workflow.md` (canonical `/change-to-plan` workflow, clarification/readiness gate contract, and one-task/one-atomic-commit task-slicing policy)
 - `context/sce/plan-code-overlap-map.md` (T01 overlap matrix for Shared Context Plan/Code, related commands, and core skill ownership/dedup targets)
 - `context/sce/dedup-ownership-table.md` (current-state canonical owner-vs-consumer matrix for shared SCE behavior domains and thin-command ownership boundaries)
+- `context/sce/project-overview-html-skill.md` (current-state contract for the `sce-project-overview-html` skill: purpose, `context/`-only source of truth, files read, direct-author HTML rendering contract, Mermaid.js CDN dependency, disposable `context/tmp/project-overview.html` output, and canonical Pkl authoring/generation surfaces)
 
 - `context/sce/atomic-commit-workflow.md` (canonical manual-vs-automated `/commit` contract, including the single-message rule, the staged-plan commit-body requirement to cite affected plan slug(s) + updated task ID(s), automated single-commit execution behavior, and the manual-profile `/commit oneshot`/`/commit skip` argument-based bypass mode that skips staging confirmation, context-guidance gate, split guidance, and plan-citation ambiguity stops to produce one message and auto-execute `git commit`)
 - `context/sce/agent-trace-implementation-contract.md` (historical no-git-wrapper Agent Trace design contract; not active runtime behavior)
