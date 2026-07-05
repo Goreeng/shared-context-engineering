@@ -115,12 +115,31 @@ This plan uses a two-phase staging approach:
   - **Evidence:** `ls context/sce/project-overview-html-skill.md` confirms the file exists (4464 bytes); `grep -n 'project-overview-html' context/context-map.md` returns line 25 with the new discoverability bullet; `nix run .#pkl-check-generated` prints `Generated outputs are up to date.` (no Pkl/generated changes, parity unaffected).
   - **Notes:** Domain file follows the current-state contract style of existing `context/sce/*.md` entries (purpose, source of truth, files read, rendering contract, HTML structure, Mermaid.js CDN dependency, output path/disposable policy, canonical Pkl authoring/generation surfaces, related skills). The context-map bullet is placed in the Feature/domain context list immediately after `dedup-ownership-table.md`, grouping it with the other SCE workflow/skill entries. No root context files (`overview.md`, `architecture.md`, `patterns.md`, `glossary.md`) were edited — this is a localized skill addition, so root context is verify-only per `sce-context-sync` gating.
 
-- [ ] T07: `Validation and cleanup` (status:todo)
+- [x] T07: `Validation and cleanup` (status:done)
   - Task ID: T07
   - Goal: Run full repo validation (`nix flake check`), confirm all success criteria are met, and verify no stray temporary artifacts were left behind.
   - Boundaries (in/out of scope): In - `nix flake check`, success-criteria walkthrough, cleanup of any `context/tmp/` scratch files produced during planning/testing. Out - new code or context edits beyond cleanup.
   - Done when: `nix flake check` passes; each success criterion above has concrete evidence (command output or file path); no unexpected files exist under `context/tmp/` other than `.gitignore`.
   - Verification notes (commands or checks): `nix flake check`; `git status` shows only intended changes (repo-root `.opencode/skills/` new file, Pkl sources, generated config, new context file, updated context-map).
+  - **Status:** done
+  - **Completed:** 2026-07-06
+  - **Files changed:** `context/plans/project-overview-html-skill.md` (T07 status update); `context/tmp/project-overview.html` and `context/tmp/cli_sce_md_contents.json` deleted (plan scratch cleanup).
+  - **Evidence:**
+    - `nix run .#pkl-check-generated` prints `Generated outputs are up to date.` and exits 0.
+    - `nix flake check` exits 0 with all 14 `aarch64-darwin` checks ✅ (`cli-tests`, `cli-clippy`, `cli-fmt`, `integrations-install-tests`, `integrations-install-clippy`, `integrations-install-fmt`, `workflow-actionlint`, `pkl-parity`, `npm-bun-tests`, `npm-biome-check`, `npm-biome-format`, `config-lib-bun-tests`, `config-lib-biome-check`, `config-lib-biome-format`).
+    - Success-criteria walkthrough (all met):
+      - SC1 (skill in repo-root `.opencode/skills/`): `.opencode/skills/sce-project-overview-html/SKILL.md` exists (8309 bytes) with valid frontmatter (`name`, `description`, `compatibility: opencode`).
+      - SC2 (promoted to Pkl + generated into all three trees): `sce-project-overview-html` present in `shared-content-code.pkl`, `shared-content-automated-code.pkl`, `shared-content.pkl`, `shared-content-automated.pkl`; generated `SKILL.md` exists in `config/.opencode/`, `config/automated/.opencode/`, and `config/.claude/`; `nix run .#pkl-check-generated` passes (parity verified).
+      - SC3 (skill body reads context files + renders HTML): verified in T01/T02 skill body — reads `context/overview.md`, `architecture.md`, `patterns.md`, `glossary.md`, `context-map.md` plus linked domain files; renders single self-contained HTML.
+      - SC4 (HTML includes Mermaid.js CDN, inline CSS, sectioned content with anchor nav, `<pre class="mermaid">` blocks): verified in T01/T02 skill body contract.
+      - SC5 (output to `context/tmp/project-overview.html`, gitignored): `context/tmp/.gitignore` is `*` + `!.gitignore`, covering the output path.
+      - SC6 (`pkl-check-generated` + `nix flake check` pass): both pass (see above).
+      - SC7 (invocable by Shared Context Code agent): `"sce-project-overview-html": allow` present in both `config/.opencode/agent/Shared Context Code.md` and `config/automated/.opencode/agent/Shared Context Code.md` (line 31 each); `skillDescriptions` entries present in all four renderer metadata files.
+      - SC8 (context-map discoverability link): `context/sce/project-overview-html-skill.md` exists (4464 bytes); `context/context-map.md` line 25 has the discoverability bullet.
+    - Repo-root `.opencode/skills/sce-project-overview-html/SKILL.md` is identical to generated `config/.opencode/skills/sce-project-overview-html/SKILL.md` (`diff` shows no differences).
+    - Cleanup: deleted plan-produced scratch files `context/tmp/project-overview.html` and `context/tmp/cli_sce_md_contents.json`. Remaining `context/tmp/` contents are gitignored runtime byproducts (`*-diff-trace.json`, `*-post-commit.json`, `sce.log`) from normal `sce hooks` operation, not plan scratch files.
+    - `git status --porcelain` is empty (working tree clean; all plan changes were committed in prior tasks).
+  - **Notes:** This is the final plan task. All 7 tasks (T01–T07) are complete. Plan is ready for closure.
 
 ## Open questions
 
@@ -130,3 +149,33 @@ None. All blocking ambiguities were resolved during the clarification gate:
 - Diagram rendering: Mermaid.js client-side via CDN.
 - Skill ownership: Shared Context Code agent.
 - Staging: Phase 1 in repo-root `.opencode/skills/` for manual testing, Phase 2 promotes to Pkl canonical pipeline.
+
+## Validation Report
+
+### Commands run
+- `nix run .#pkl-check-generated` -> exit 0 (`Generated outputs are up to date.`)
+- `nix flake check` -> exit 0 (all 14 `aarch64-darwin` checks ✅: `cli-tests`, `cli-clippy`, `cli-fmt`, `integrations-install-tests`, `integrations-install-clippy`, `integrations-install-fmt`, `workflow-actionlint`, `pkl-parity`, `npm-bun-tests`, `npm-biome-check`, `npm-biome-format`, `config-lib-bun-tests`, `config-lib-biome-check`, `config-lib-biome-format`)
+- `git status --porcelain` -> empty (working tree clean)
+- Removed: `context/tmp/project-overview.html` and `context/tmp/cli_sce_md_contents.json` (plan-produced scratch files from T01 manual testing)
+
+### Success-criteria verification
+- [x] SC1: Skill exists in repo-root `.opencode/skills/sce-project-overview-html/SKILL.md` and is manually testable -> confirmed via `ls` (8309 bytes) + `head -6` shows valid frontmatter (`name`, `description`, `compatibility: opencode`)
+- [x] SC2: Skill promoted to canonical Pkl sources and generated into all three target trees with parity verified -> `sce-project-overview-html` present in `shared-content-code.pkl`, `shared-content-automated-code.pkl`, `shared-content.pkl`, `shared-content-automated.pkl`; generated `SKILL.md` exists in `config/.opencode/`, `config/automated/.opencode/`, `config/.claude/`; `nix run .#pkl-check-generated` passes
+- [x] SC3: Skill body instructs reading `context/overview.md`, `architecture.md`, `patterns.md`, `glossary.md`, `context-map.md` plus linked domain files and rendering into single HTML -> verified in T01/T02 skill body
+- [x] SC4: Generated HTML includes Mermaid.js CDN `<script>`, inline CSS, sectioned content with anchor navigation, `<pre class="mermaid">` blocks -> verified in T01/T02 skill body contract
+- [x] SC5: Output written to `context/tmp/project-overview.html` (disposable, gitignored) -> `context/tmp/.gitignore` is `*` + `!.gitignore`, covering the path
+- [x] SC6: `nix run .#pkl-check-generated` passes + `nix flake check` passes -> both pass (see Commands run)
+- [x] SC7: Skill invocable by Shared Context Code agent (registered in `skill:` allowlist in both manual and automated OpenCode metadata) -> `"sce-project-overview-html": allow` at line 31 in both `config/.opencode/agent/Shared Context Code.md` and `config/automated/.opencode/agent/Shared Context Code.md`; `skillDescriptions` entries in all four renderer metadata files
+- [x] SC8: `context/context-map.md` updated with discoverability link to `context/sce/project-overview-html-skill.md` -> line 25 bullet; domain file exists (4464 bytes)
+
+### Context sync
+- Classification: verify-only (localized skill addition; no root-level behavior/architecture/terminology impact).
+- Root files (`overview.md`, `architecture.md`, `glossary.md`, `patterns.md`) verified against code truth — no edits needed. The skill is a standalone utility skill not wired into command-body orchestration, so it does not belong in the command-orchestration descriptions like `/next-task`/`/change-to-plan`/`/commit` skills.
+- Feature existence documentation present and linked: `context/sce/project-overview-html-skill.md` + `context/context-map.md` line 25.
+- Repo-root `.opencode/skills/sce-project-overview-html/SKILL.md` is identical to generated `config/.opencode/skills/sce-project-overview-html/SKILL.md`.
+
+### Failed checks and follow-ups
+- None.
+
+### Residual risks
+- None identified. Plan is complete; all 7 tasks (T01–T07) done.
