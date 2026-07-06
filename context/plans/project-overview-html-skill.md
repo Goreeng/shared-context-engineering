@@ -40,13 +40,18 @@ This plan uses a two-phase staging approach:
 
 ### Phase 1 — Stage skill in active runtime tree for manual testing
 
-- [ ] T01: `Create sce-project-overview-html skill in repo-root .opencode/skills/` (status:todo)
+- [x] T01: `Create sce-project-overview-html skill in repo-root .opencode/skills/` (status:done)
   - Task ID: T01
   - Goal: Hand-author `.opencode/skills/sce-project-overview-html/SKILL.md` with OpenCode skill frontmatter (`name`, `description`, `compatibility: opencode`) and the full skill body (when to use, source files to read, HTML structure contract, Mermaid.js CDN embedding, inline CSS guidance, output path `context/tmp/project-overview.html`, disposable-output note, stale-context caveat). This makes the skill immediately loadable and testable by OpenCode in this repo.
   - Boundaries (in/out of scope): In - new `.opencode/skills/sce-project-overview-html/SKILL.md` file only. Out - `config/.opencode/` generated tree (Phase 2), Pkl sources (Phase 2), metadata files (Phase 2), context files (Phase 2). Do not edit any other `.opencode/` files.
   - Done when: `.opencode/skills/sce-project-overview-html/SKILL.md` exists with valid frontmatter and the complete skill body; OpenCode can discover the skill (visible in skill list / invocable).
   - Verification notes (commands or checks): `ls .opencode/skills/sce-project-overview-html/SKILL.md`; `head -6 .opencode/skills/sce-project-overview-html/SKILL.md` shows correct frontmatter; user manually invokes the skill in OpenCode and confirms it produces `context/tmp/project-overview.html`.
   - **Manual test gate:** Do not start T02 until the user confirms the skill works as expected in OpenCode.
+  - **Status:** done
+  - **Completed:** 2026-07-01
+  - **Files changed:** `.opencode/skills/sce-project-overview-html/SKILL.md` (new)
+  - **Evidence:** `ls` confirms file exists; `head -6` shows valid frontmatter (`name`, `description`, `compatibility: opencode`); `nix run .#pkl-check-generated` prints `Generated outputs are up to date.` (repo-root `.opencode/skills/` is not part of generated parity); `git status` shows only the new untracked skill directory.
+  - **Notes:** Skill body follows the same frontmatter shape and section structure (`What I do` / `When to use` / `How to run this` / `Expected output` / `Related skills`) as existing repo-root skills. Awaiting user manual test confirmation before T02.
 
 ### Phase 2 — Promote skill to canonical Pkl pipeline
 
