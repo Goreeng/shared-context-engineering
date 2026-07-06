@@ -103,12 +103,17 @@ This plan uses a two-phase staging approach:
   - **Evidence:** `nix run .#pkl-check-generated` prints `Generated outputs are up to date.` and exits 0; `ls` confirms all three generated `SKILL.md` files exist; `head -6` confirms correct frontmatter (`name`, `description`, `compatibility: opencode` for OpenCode variants, `compatibility: claude` for Claude variant); `diff .opencode/skills/sce-project-overview-html/SKILL.md config/.opencode/skills/sce-project-overview-html/SKILL.md` shows no differences after sync (trailing newline added to repo-root copy to match generated canonical output).
   - **Notes:** Executed together with T03 and T04. Regeneration also updated the two Shared Context Code agent files (`config/.opencode/agent/Shared Context Code.md` and `config/automated/.opencode/agent/Shared Context Code.md`) with the new `"sce-project-overview-html": allow` permission entry, as expected from the T04 metadata edits.
 
-- [ ] T06: `Update context-map.md with new skill discoverability link` (status:todo)
+- [x] T06: `Update context-map.md with new skill discoverability link` (status:done)
   - Task ID: T06
   - Goal: Add a `context/sce/project-overview-html-skill.md` domain file describing the new skill's current-state contract, and add a discoverability link to it in `context/context-map.md` under the SCE working-area or feature/domain section.
   - Boundaries (in/out of scope): In - new `context/sce/project-overview-html-skill.md` file and one new bullet in `context/context-map.md`. Out - editing other context files, editing `context/overview.md` (this is a localized skill addition, verify-only for root context per `sce-context-sync` gating).
   - Done when: `context/sce/project-overview-html-skill.md` exists with a concise current-state description of the skill (purpose, source files, output path, Mermaid.js CDN dependency, disposable-output policy); `context/context-map.md` contains a bullet linking to it.
   - Verification notes (commands or checks): `ls context/sce/project-overview-html-skill.md`; `grep -n 'project-overview-html' context/context-map.md`.
+  - **Status:** done
+  - **Completed:** 2026-07-05
+  - **Files changed:** `context/sce/project-overview-html-skill.md` (new), `context/context-map.md` (one new bullet in Feature/domain context)
+  - **Evidence:** `ls context/sce/project-overview-html-skill.md` confirms the file exists (4464 bytes); `grep -n 'project-overview-html' context/context-map.md` returns line 25 with the new discoverability bullet; `nix run .#pkl-check-generated` prints `Generated outputs are up to date.` (no Pkl/generated changes, parity unaffected).
+  - **Notes:** Domain file follows the current-state contract style of existing `context/sce/*.md` entries (purpose, source of truth, files read, rendering contract, HTML structure, Mermaid.js CDN dependency, output path/disposable policy, canonical Pkl authoring/generation surfaces, related skills). The context-map bullet is placed in the Feature/domain context list immediately after `dedup-ownership-table.md`, grouping it with the other SCE workflow/skill entries. No root context files (`overview.md`, `architecture.md`, `patterns.md`, `glossary.md`) were edited — this is a localized skill addition, so root context is verify-only per `sce-context-sync` gating.
 
 - [ ] T07: `Validation and cleanup` (status:todo)
   - Task ID: T07
